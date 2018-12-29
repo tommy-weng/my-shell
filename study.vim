@@ -18,5 +18,6 @@ function! ArrayCompare(src, dst)
   return 1
 endfunction
 
+"set cindent
 "set autoindent
 "set smartindent

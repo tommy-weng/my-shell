@@ -1,0 +1,13 @@
+#!/usr/bin/expect
+
+set timeout 30
+spawn scp -q start-time.txt postreview@10.56.78.54:~
+expect "password:"
+send "postreview\r"
+spawn scp -q end-time.txt postreview@10.56.78.54:~
+expect "password:"
+send "postreview\r"
+spawn ssh postreview@10.56.78.54 './get-comments-count.sh'
+expect "password:"
+send "postreview\r"
+interact
