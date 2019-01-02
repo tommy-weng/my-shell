@@ -17,15 +17,18 @@ set nu
 :inoremap [ <c-r>=OpenPair('[', ']')<CR>
 :inoremap ] <c-r>=ClosePair(']')<CR>
 
-:inoremap " <c-r>=OpenPair('"', '"')<CR>
-:inoremap ' <c-r>=OpenPair("'", "'")<CR>
+:inoremap " <c-r>=QuotePair('"')<CR>
+:inoremap ' <c-r>=QuotePair("'")<CR>
 
-:inoremap <CR> <c-r>=BracePair()<CR>
+:inoremap { <c-r>=BracePairHorizon()<CR>
+:inoremap <CR> <c-r>=BracePairVertical()<CR>
+:inoremap } <c-r>=ClosePair('}')<CR>
+
 :inoremap <BS> <c-r>=RemovePair()<CR>
 
 function! OpenPair(open, close)
   let l:line = getline('.')
-  if col('.') > strlen(l:line) || l:line[col('.') - 1] == ' ' || l:line[col('.') - 1] == a:close
+  if col('.') > strlen(l:line) || index(["}",")","]"," "], l:line[col('.') - 1]) != -1
     return a:open.a:close."\<ESC>i"
   else
     return a:open
@@ -34,10 +37,21 @@ endfunction
 
 function! ClosePair(close)
   let l:line = getline('.')
-  if ExistPair() == 1 && l:line[col('.') - 1] != ''
+  if ExistPair() == 1 && l:line[col('.') - 1] == a:close
     return "\<Right>"
   else
     return a:close
+  endif
+endfunction
+
+function! QuotePair(quote)
+  let l:line = getline('.')
+  if l:line[col('.') - 2] == ' ' && l:line[col('.') - 1] == ''
+    return a:quote.a:quote."\<ESC>i"
+  elseif l:line[col('.') - 1] == a:quote
+    return "\<Right>"
+  else
+    return a:quote
   endif
 endfunction
 
@@ -61,9 +75,31 @@ function! ExistPair()
   endif
 endfunction  
 
-function! BracePair()
+function! BracePairHorizon()
+  let l:line = getline('.')
+  if match(l:line,'=') != -1 || index(["}",")","]"," "], l:line[col('.') - 1]) != -1
+    return "{}\<ESC>i"
+  else
+    return "{"
+endfunction
+
+function! ShiftLeft()
+  let l:curr_pos = getpos(".")
+  let l:curr_pos[2] -= 1
+  call setpos(".", l:curr_pos)
+endfunction
+
+function! ShiftRight()
+  let l:curr_pos = getpos(".")
+  let l:curr_pos[2] += 1
+  call setpos(".", l:curr_pos)
+endfunction
+
+function! BracePairVertical()
   if getline('.')[col('.') - 2] == '{'
+    call ShiftLeft()
     let l:status = ExistPair()
+    call ShiftRight()
     if index([0,3], l:status) != -1
       return "\<CR>}\<ESC>O\<TAB>"
     elseif l:status == 1
@@ -79,19 +115,17 @@ function RemovePair()
   let l:line  = getline('.')
   let l:left  = l:line[col('.')-2]
   let l:right = l:line[col('.')-1]
-  if index(["{","(","[","\'","\""],l:left)!=-1 && index(["}",")","]","\'","\""],l:right)!=-1
-    if len(l:line)==col('.')
-      return "\<Esc>dldla"
-    else
-      return "\<Esc>dldli"
-    endif
+  let l:leftpos  = index(["{","(","[","\'","\""],l:left)
+  let l:rightpos = index(["}",")","]","\'","\""],l:right)
+  if l:leftpos != -1 && l:rightpos != -1 && l:leftpos == l:rightpos
+    return "\<Esc>dldli"
   endif
   if strlen(l:line) == 4 && l:left == ' ' && l:right == ''
     let l:preline  = getline(line('.')-1)
     let l:nextline = getline(line('.')+1)
     if match(l:preline,'{') != -1 && match(l:preline,'}') == -1
       if match(l:nextline,'{') == -1 && match(l:nextline,'}') != -1
-        return "\<Esc>jddkk$dla"
+        return "\<Esc>j^dlkk$dla"
       endif
     endif
   endif
