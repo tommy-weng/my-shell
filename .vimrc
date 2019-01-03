@@ -10,7 +10,7 @@ set autoindent
 " Set line number
 set nu
 
-" Init varable
+" Init script variables
 let s:prev_pos = []
 
 " Auto complete
@@ -113,7 +113,7 @@ function! BracePairVertical()
     endif
   elseif index([")", "]", "}"], l:line[col('.') - 1]) != -1
     let l:curr_pos = getpos(".")
-    if s:prev_pos != l:curr_pos
+    if s:prev_pos != l:curr_pos && ExistPair() == 1
       let s:prev_pos = l:curr_pos
       return "\<right>"
     endif
