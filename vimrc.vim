@@ -10,6 +10,9 @@ set autoindent
 " Set line number
 set nu
 
+" Init varable
+let s:prev_pos = []
+
 " Auto complete
 :inoremap ( <c-r>=OpenPair('(', ')')<CR>
 :inoremap ) <c-r>=ClosePair(')')<CR>
@@ -96,6 +99,7 @@ function! ShiftRight()
 endfunction
 
 function! BracePairVertical()
+  let l:line  = getline('.')
   if getline('.')[col('.') - 2] == '{'
     call ShiftLeft()
     let l:status = ExistPair()
@@ -106,6 +110,12 @@ function! BracePairVertical()
       return "\<CR>\<ESC>O\<TAB>"
     elseif l:status == 2
       return "\<CR>\<TAB>"
+    endif
+  elseif index([")", "]", "}"], l:line[col('.') - 1]) != -1
+    let l:curr_pos = getpos(".")
+    if s:prev_pos != l:curr_pos
+      let s:prev_pos = l:curr_pos
+      return "\<right>"
     endif
   endif
   return "\<CR>"
@@ -120,12 +130,12 @@ function RemovePair()
   if l:leftpos != -1 && l:rightpos != -1 && l:leftpos == l:rightpos
     return "\<Esc>dldli"
   endif
-  if strlen(l:line) == 4 && l:left == ' ' && l:right == ''
+  if l:left == ' ' && l:right == ''
     let l:preline  = getline(line('.')-1)
     let l:nextline = getline(line('.')+1)
     if match(l:preline,'{') != -1 && match(l:preline,'}') == -1
       if match(l:nextline,'{') == -1 && match(l:nextline,'}') != -1
-        return "\<Esc>j^dlkk$dla"
+        return "\<Esc>dldldldljddkk$dda"
       endif
     endif
   endif
