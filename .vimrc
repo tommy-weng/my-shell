@@ -32,15 +32,20 @@ let s:prev_pos = []
 :inoremap <CR> <c-r>=TransEnter()<CR>
 :inoremap <BS> <c-r>=RemovePair()<CR>
 
+function! IndicateSharp()
+  let l:line = getline('.')
+  return match(l:line,"#include") != -1 || match(l:line,"template") != -1
+endfunction
+
 function! OpenSharp()
-  if IsSharpPaired()
+  if IndicateSharp()
     return "<>\<ESC>i"
   else
     return "<"
 endfunction
 
 function! CloseSharp()
-  if IsSharpPaired() && getline('.')[col('.') - 1] == '>'
+  if IsSharpPaired()
     return "\<Right>"
   else
     return ">"
@@ -135,17 +140,16 @@ function! ShiftRight()
   call setpos(".", l:curr_pos)
 endfunction
 
-function! IsSharpPaired()
-  let l:line = getline('.')
-  return match(l:line,"#include") != -1 || match(l:line,"template") != -1
-endfunction
-
 function! IsBracePaired()
   return index([")", "]", "}"], getline('.')[col('.') - 1]) != -1 && ExistPair() == 1
 endfunction
 
 function! IsQuotePaired()
   return index(["\"", "\'" ], getline('.')[col('.') - 1]) != -1 && ExistClone()
+endfunction
+
+function! IsSharpPaired()
+  return getline('.')[col('.') - 1] == '>' && IndicateSharp()
 endfunction
 
 function! TransEnter()
