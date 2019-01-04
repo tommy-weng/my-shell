@@ -23,11 +23,36 @@ let s:prev_pos = []
 :inoremap " <c-r>=QuotePair('"')<CR>
 :inoremap ' <c-r>=QuotePair("'")<CR>
 
-:inoremap { <c-r>=BracePairHorizon()<CR>
-:inoremap <CR> <c-r>=BracePairVertical()<CR>
+:inoremap { <c-r>=BracePair()<CR>
 :inoremap } <c-r>=ClosePair('}')<CR>
 
+:inoremap < <c-r>=OpenSharp()<CR>
+:inoremap > <c-r>=CloseSharp()<CR>
+
+:inoremap <CR> <c-r>=TransEnter()<CR>
 :inoremap <BS> <c-r>=RemovePair()<CR>
+
+function! OpenSharp()
+  if IsSharpPaired()
+    return "<>\<ESC>i"
+  else
+    return "<"
+endfunction
+
+function! CloseSharp()
+  if IsSharpPaired() && getline('.')[col('.') - 1] == '>'
+    return "\<Right>"
+  else
+    return ">"
+endfunction
+
+function! BracePair()
+  let l:line = getline('.')
+  if match(l:line,'=') != -1 || index(["}",")","]"," "], l:line[col('.') - 1]) != -1
+    return "{}\<ESC>i"
+  else
+    return "{"
+endfunction
 
 function! OpenPair(open, close)
   let l:line = getline('.')
@@ -47,12 +72,26 @@ function! ClosePair(close)
   endif
 endfunction
 
-function! QuotePair(quote)
+function! IsAlphaDigitUnderline()
   let l:line = getline('.')
-  if l:line[col('.') - 2] == ' ' && l:line[col('.') - 1] == ''
-    return a:quote.a:quote."\<ESC>i"
-  elseif l:line[col('.') - 1] == a:quote
+  for i in range(col('.') - 1, strlen(l:line))
+    if l:line[i] == ' '
+      continue
+    endif
+    if match(l:line[i], '\w') != -1
+      return 1
+    else
+      return 0
+    endif
+  endfor
+  return 0
+endfunction
+
+function! QuotePair(quote)
+  if getline('.')[col('.') - 1] == a:quote
     return "\<Right>"
+  elseif !IsAlphaDigitUnderline()
+    return a:quote.a:quote."\<ESC>i"
   else
     return a:quote
   endif
@@ -76,15 +115,13 @@ function! ExistPair()
       return 3
     endif
   endif
-endfunction  
-
-function! BracePairHorizon()
-  let l:line = getline('.')
-  if match(l:line,'=') != -1 || index(["}",")","]"," "], l:line[col('.') - 1]) != -1
-    return "{}\<ESC>i"
-  else
-    return "{"
 endfunction
+
+function! ExistClone()
+  let l:line = getline('.')
+  let l:clone_pos = stridx(l:line, l:line[col('.') - 1])
+  return l:clone_pos + 1 != col('.')
+endfunction  
 
 function! ShiftLeft()
   let l:curr_pos = getpos(".")
@@ -98,8 +135,20 @@ function! ShiftRight()
   call setpos(".", l:curr_pos)
 endfunction
 
-function! BracePairVertical()
-  let l:line  = getline('.')
+function! IsSharpPaired()
+  let l:line = getline('.')
+  return match(l:line,"#include") != -1 || match(l:line,"template") != -1
+endfunction
+
+function! IsBracePaired()
+  return index([")", "]", "}"], getline('.')[col('.') - 1]) != -1 && ExistPair() == 1
+endfunction
+
+function! IsQuotePaired()
+  return index(["\"", "\'" ], getline('.')[col('.') - 1]) != -1 && ExistClone()
+endfunction
+
+function! TransEnter()
   if getline('.')[col('.') - 2] == '{'
     call ShiftLeft()
     let l:status = ExistPair()
@@ -111,9 +160,9 @@ function! BracePairVertical()
     elseif l:status == 2
       return "\<CR>\<TAB>"
     endif
-  elseif index([")", "]", "}"], l:line[col('.') - 1]) != -1
+  elseif IsBracePaired() || IsQuotePaired() || IsSharpPaired()
     let l:curr_pos = getpos(".")
-    if s:prev_pos != l:curr_pos && ExistPair() == 1
+    if s:prev_pos != l:curr_pos
       let s:prev_pos = l:curr_pos
       return "\<right>"
     endif
@@ -125,8 +174,8 @@ function RemovePair()
   let l:line  = getline('.')
   let l:left  = l:line[col('.')-2]
   let l:right = l:line[col('.')-1]
-  let l:leftpos  = index(["{","(","[","\'","\""],l:left)
-  let l:rightpos = index(["}",")","]","\'","\""],l:right)
+  let l:leftpos  = index(["{","(","[","<","\'","\""],l:left)
+  let l:rightpos = index(["}",")","]",">","\'","\""],l:right)
   if l:leftpos != -1 && l:rightpos != -1 && l:leftpos == l:rightpos
     return "\<Esc>dldli"
   endif
