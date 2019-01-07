@@ -136,19 +136,34 @@ function! IsEof()
   call setpos('.', l:origpos)
   return l:origpos[1] == l:currpos[1]
 endfunction
-  
+
+function! IndicateSemicolon()
+  let l:match_struct = match(getline(line('.')-1), "struct") != -1  || match(getline('.'), "struct") != -1
+  let l:match_enum = match(getline(line('.')-1), "enum") != -1  || match(getline('.'), "enum") != -1
+  return l:match_struct || l:match_enum
+endfunction
+
+function! GetSemicolon()
+  if IndicateSemicolon()
+    return ';'
+  endif
+  return ''
+endfunction
+
 function! TrimBlankLine()
+  let l:semicolon = GetSemicolon()
+  let l:editcommand = "A\<CR>}".l:semicolon."\<ESC>O\<TAB>"
   execute "normal A\n"
   let l:blanklines = nextnonblank('.') - line('.') - 1
   if l:blanklines > 0
-    return "\<ESC>".l:blanklines."ddkA\<CR>}\<ESC>O\<TAB>"
+    return "\<ESC>".l:blanklines."ddk".l:editcommand
   elseif l:blanklines == 0 && match(getline(line('.')+1), '}') == -1
-    return "\<ESC>kA\<CR>}\<ESC>O\<TAB>"
+    return "\<ESC>k".editcommand
   endif
   if IsEof()
-    return "\<ESC>ddA\<CR>}\<ESC>O\<TAB>"
+    return "\<ESC>dd".editcommand
   endif
-  return "\<ESC>ddkA\<CR>}\<ESC>O\<TAB>"
+  return "\<ESC>ddk".editcommand
 endfunction
 
 function! ShiftLeft()
@@ -214,7 +229,12 @@ function RemovePair()
     let l:nextline = getline(line('.')+1)
     if match(l:preline,'{') != -1 && match(l:preline,'}') == -1
       if match(l:nextline,'{') == -1 && match(l:nextline,'}') != -1
-        return "\<Esc>dldldldljddkk$dda"
+        execute "normal dd"
+        if IsEof()
+          return "\<Esc>dd$dla"
+        else
+          return "\<Esc>ddk$dla"
+        endif 
       endif
     endif
   endif
