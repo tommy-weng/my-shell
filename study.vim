@@ -1,3 +1,21 @@
+"set cindent
+"set autoindent
+"set smartindent
+
+function! TrimBlankLine()
+  execute "normal A\n"
+  let l:curr_row = line('.')
+  let l:next_row = nextnonblank('.')
+  if l:next_row - l:curr_row == 1
+    return "\<CR>\<ESC>ki}\<ESC>O\<TAB>"
+  endif
+  while l:next_row - l:curr_row > 2
+    execute "normal dd"
+    let l:next_row = nextnonblank('.')
+  endwhile
+  return "}\<ESC>O\<TAB>"
+endfunction
+
 function! PrintArray(arr)
   echom string(a:arr)
 endfunction
@@ -18,6 +36,16 @@ function! ArrayCompare(src, dst)
   return 1
 endfunction
 
-"set cindent
-"set autoindent
-"set smartindent
+function! TrimBlankLine()
+  execute "normal A\n"
+  let l:blanklines = nextnonblank('.') - line('.') - 1
+  if l:blanklines > 0
+    return "\<ESC>".l:blanklines."ddkA\<CR>}\<ESC>O\<TAB>"
+  elseif l:blanklines == 0 && match(getline(line('.')+1), '}') == -1
+    return "\<ESC>kA\<CR>}\<ESC>O\<TAB>"
+  endif
+  if IsEof()
+    return "\<ESC>ddA\<CR>}\<ESC>O\<TAB>"
+  endif
+  return "\<ESC>ddkA\<CR>}\<ESC>O\<TAB>"
+endfunction

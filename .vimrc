@@ -12,6 +12,7 @@ set nu
 
 " Init script variables
 let s:prev_pos = []
+let s:prev_letter = ' '
 
 " Auto complete
 :inoremap ( <c-r>=OpenPair('(', ')')<CR>
@@ -79,7 +80,7 @@ endfunction
 
 function! IsAlphaDigitUnderline()
   let l:line = getline('.')
-  for i in range(col('.') - 1, strlen(l:line))
+  for i in range(col('.') - 1, strlen(l:line) - 1)
     if l:line[i] == ' '
       continue
     endif
@@ -128,6 +129,28 @@ function! ExistClone()
   return l:clone_pos + 1 != col('.')
 endfunction  
 
+function! IsEof()
+  let l:origpos = getpos('.')
+  execute "normal G"
+  let l:currpos = getpos('.')
+  call setpos('.', l:origpos)
+  return l:origpos[1] == l:currpos[1]
+endfunction
+  
+function! TrimBlankLine()
+  execute "normal A\n"
+  let l:blanklines = nextnonblank('.') - line('.') - 1
+  if l:blanklines > 0
+    return "\<ESC>".l:blanklines."ddkA\<CR>}\<ESC>O\<TAB>"
+  elseif l:blanklines == 0 && match(getline(line('.')+1), '}') == -1
+    return "\<ESC>kA\<CR>}\<ESC>O\<TAB>"
+  endif
+  if IsEof()
+    return "\<ESC>ddA\<CR>}\<ESC>O\<TAB>"
+  endif
+  return "\<ESC>ddkA\<CR>}\<ESC>O\<TAB>"
+endfunction
+
 function! ShiftLeft()
   let l:curr_pos = getpos(".")
   let l:curr_pos[2] -= 1
@@ -154,11 +177,12 @@ endfunction
 
 function! TransEnter()
   if getline('.')[col('.') - 2] == '{'
+    let s:prev_letter = ' '
     call ShiftLeft()
     let l:status = ExistPair()
     call ShiftRight()
     if index([0,3], l:status) != -1
-      return "\<CR>}\<ESC>O\<TAB>"
+      return TrimBlankLine()
     elseif l:status == 1
       return "\<CR>\<ESC>O\<TAB>"
     elseif l:status == 2
@@ -169,6 +193,8 @@ function! TransEnter()
     if s:prev_pos != l:curr_pos
       let s:prev_pos = l:curr_pos
       return "\<right>"
+    else
+      let s:prev_pos = []
     endif
   endif
   return "\<CR>"
@@ -183,7 +209,7 @@ function RemovePair()
   if l:leftpos != -1 && l:rightpos != -1 && l:leftpos == l:rightpos
     return "\<Esc>dldli"
   endif
-  if l:left == ' ' && l:right == ''
+  if l:left == ' ' && l:right == '' && s:prev_letter == ' '
     let l:preline  = getline(line('.')-1)
     let l:nextline = getline(line('.')+1)
     if match(l:preline,'{') != -1 && match(l:preline,'}') == -1
@@ -191,6 +217,9 @@ function RemovePair()
         return "\<Esc>dldldldljddkk$dda"
       endif
     endif
+  endif
+  if l:left != ' '
+    let s:prev_letter = l:left
   endif
   return "\<BS>"
 endf
