@@ -152,18 +152,15 @@ endfunction
 
 function! TrimBlankLine()
   let l:semicolon = GetSemicolon()
-  let l:editcommand = "A\<CR>}".l:semicolon."\<ESC>O\<TAB>"
-  execute "normal A\n"
-  let l:blanklines = nextnonblank('.') - line('.') - 1
+  let l:editcommand = "\<CR>}".l:semicolon."\<ESC>O\<TAB>"
+  let l:blanklines = nextnonblank(line('.')+1) - line('.') - 2
   if l:blanklines > 0
-    return "\<ESC>".l:blanklines."ddk".l:editcommand
-  elseif l:blanklines == 0 && match(getline(line('.')+1), '}') == -1
-    return "\<ESC>k".editcommand
+    return "\<ESC>j".l:blanklines."ddkA".l:editcommand
+  elseif l:blanklines == -1 && match(getline(line('.')+1), '}') == -1
+    return "\<CR>\<ESC>kA".l:editcommand
+  else
+    return l:editcommand
   endif
-  if IsEof()
-    return "\<ESC>dd".editcommand
-  endif
-  return "\<ESC>ddk".editcommand
 endfunction
 
 function! ShiftLeft()
