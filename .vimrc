@@ -215,7 +215,7 @@ function! TransEnter()
   return "\<CR>"
 endfunction
 
-function RemovePair()
+function! RemovePair()
   let l:line  = getline('.')
   let l:left  = l:line[col('.')-2]
   let l:right = l:line[col('.')-1]

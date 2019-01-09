@@ -2,6 +2,17 @@
 "set autoindent
 "set smartindent
 
+:set nonu "cancle line number
+:nohl "unset highlight
+
+echo "Hello World"
+let a = [1,2,3,4,5]
+let i = 0
+while i < 5
+    echom i
+    let i += 1
+endwhile
+
 function! TrimBlankLine()
   execute "normal A\n"
   let l:curr_row = line('.')
