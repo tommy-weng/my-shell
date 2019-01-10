@@ -78,6 +78,17 @@ function! ClosePair(close)
   endif
 endfunction
 
+function! ExistClone(quote)
+  let l:line = getline('.')
+  let l:count = 0
+  for i in range(strlen(l:line))
+    if (l:line[i] == a:quote)
+      let l:count += 1
+    endif
+  endfor
+  return l:count % 2 == 0
+endfunction
+
 function! IsAlphaDigitUnderline()
   let l:line = getline('.')
   for i in range(col('.') - 1, strlen(l:line) - 1)
@@ -96,7 +107,7 @@ endfunction
 function! QuotePair(quote)
   if getline('.')[col('.') - 1] == a:quote
     return "\<Right>"
-  elseif !IsAlphaDigitUnderline()
+  elseif !IsAlphaDigitUnderline() && ExistClone(a:quote)
     return a:quote.a:quote."\<ESC>i"
   else
     return a:quote
@@ -122,12 +133,6 @@ function! ExistPair()
     endif
   endif
 endfunction
-
-function! ExistClone()
-  let l:line = getline('.')
-  let l:clone_pos = stridx(l:line, l:line[col('.') - 1])
-  return l:clone_pos + 1 != col('.')
-endfunction  
 
 function! IsEof()
   let l:origpos = getpos('.')
@@ -180,7 +185,8 @@ function! IsBracePaired()
 endfunction
 
 function! IsQuotePaired()
-  return index(["\"", "\'" ], getline('.')[col('.') - 1]) != -1 && ExistClone()
+  let l:quote = getline('.')[col('.')- 1]
+  return index(["\"", "\'" ], l:quote) != -1 && ExistClone(l:quote)
 endfunction
 
 function! IsSharpPaired()
