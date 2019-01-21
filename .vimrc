@@ -35,7 +35,7 @@ let s:prev_letter = ' '
 
 function! IndicateSharp()
   let l:line = getline('.')
-  return match(l:line,"#include") != -1 || match(l:line,"template") != -1
+  return match(l:line,"#include") != -1 || match(l:line,"template") != -1 || match(l:line,"vector") != -1
 endfunction
 
 function! OpenSharp()
