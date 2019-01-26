@@ -78,11 +78,7 @@ function! ClosePair(close)
   endif
 endfunction
 
-function! ExistClone(quote)
-  return stridx(getline('.'), a:quote) != -1
-endfunction
-
-function! IsEven(quote)
+function! IsEvenClone(quote)
   let l:line = getline('.')
   let l:count = 0
   for i in range(strlen(l:line))
@@ -93,7 +89,11 @@ function! IsEven(quote)
   return l:count % 2 == 0
 endfunction
 
-function! IsAlphaDigitUnderline()
+function! IsAlphaDigitUnderlineBackward()
+  return match(getline('.')[col('.') - 2], '\w') != -1
+endfunction
+
+function! IsAlphaDigitUnderlineForward()
   let l:line = getline('.')
   for i in range(col('.') - 1, strlen(l:line) - 1)
     if l:line[i] == ' '
@@ -111,7 +111,7 @@ endfunction
 function! QuotePair(quote)
   if getline('.')[col('.') - 1] == a:quote
     return "\<Right>"
-  elseif !IsAlphaDigitUnderline() && !ExistClone(a:quote)
+  elseif !IsAlphaDigitUnderlineForward() && !IsAlphaDigitUnderlineBackward()
     return a:quote.a:quote."\<ESC>i"
   else
     return a:quote
@@ -190,7 +190,7 @@ endfunction
 
 function! IsQuotePaired()
   let l:quote = getline('.')[col('.')- 1]
-  return index(["\"", "\'" ], l:quote) != -1 && IsEven(l:quote)
+  return index(["\"", "\'" ], l:quote) != -1 && IsEvenClone(l:quote)
 endfunction
 
 function! IsSharpPaired()

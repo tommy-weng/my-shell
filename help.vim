@@ -13,6 +13,10 @@ while i < 5
     let i += 1
 endwhile
 
+function! ExistClone(quote)
+  return stridx(getline('.'), a:quote) != -1
+endfunction
+
 function! TrimBlankLine()
   execute "normal A\n"
   let l:curr_row = line('.')
