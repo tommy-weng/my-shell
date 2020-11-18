@@ -149,7 +149,8 @@ endfunction
 function! IndicateSemicolon()
   let l:match_struct = match(getline(line('.')-1), "struct") != -1  || match(getline('.'), "struct") != -1
   let l:match_enum = match(getline(line('.')-1), "enum") != -1  || match(getline('.'), "enum") != -1
-  return l:match_struct || l:match_enum
+  let l:match_class = match(getline(line('.')-1), "class") != -1  || match(getline('.'), "class") != -1
+  return l:match_struct || l:match_enum || l:match_class
 endfunction
 
 function! GetSemicolon()
