@@ -1,3 +1,6 @@
+" enable backspace
+:set backspace=start,eol,indent
+
 " Tab width
 set tabstop=4
 set softtabstop=4

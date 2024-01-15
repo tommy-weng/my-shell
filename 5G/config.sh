@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#COMPONENT="L2PS"
+#COMPONENT="L2LO"
 COMPONENT="L2PS"
 
+DBGLOG=off
 #DBGLOG=on
-DBGLOG=on
